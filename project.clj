@@ -9,7 +9,11 @@
                  [integrant "0.8.0"]
                  [integrant/repl "0.3.1"]
                  [metosin/reitit "0.5.5"]
-                 [midje "1.9.9"]]
+                 [com.datomic/datomic-free "0.9.5697"]]
   :main ^:skip-aot tsksrv.server
   :target-path "target/%s"
-  :profiles {:uberjar {:aot :all}})
+  :profiles {:dev {:dependencies [[midje "1.9.9"]
+                                  [clj-http "3.10.2"]]
+                   :plugins [[lein-midje "3.2.2"]]}
+             :uberjar {:aot :all}}
+  :jvm-opts ["-Dconfig=system_config.edn"])

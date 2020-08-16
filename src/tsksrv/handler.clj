@@ -1,7 +1,14 @@
 (ns tsksrv.handler)
 
-(defn ok
+
+(defn ping
   [req]
   {:status 200
-   :body (str "Path:" (:path req) ", path params:" (:path-params req))})
+   :body "0.0.1"})
 
+(defn ok
+  [{:keys [path path-params db] :as req}]
+  {:status 200
+   :body (str "Path:" path
+              ", path params:" path-params
+              ", db:" db)})
