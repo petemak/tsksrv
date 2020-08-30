@@ -70,13 +70,14 @@
 ;; for writing.
 ;;
 ;; ----------------------------------------------
-(defn init-db
+(defn start-db!
   "Connect to the database specified by the uri
    and transacts the schema"
   [uri]
-  (let [conn (connect uri)]
+  (let [conn (connect kuri)
+        db (d/transact conn task-schema)]
     {:conn conn
-     :db (d/transact conn task-schema)}))
+     :db db}))
 
 
 ;; ----------------------------------------------
@@ -84,7 +85,7 @@
 ;; part of clean shutdown of a JVM process.
 ;;
 ;; ----------------------------------------------
-(defn shutdown
+(defn stop-db!
   "Shut down database resources"
   []
   (d/shutdown false))
@@ -94,6 +95,35 @@
 ;; Save a task. 
 ;; - name and description must be provided
 ;; - id and creation date will be generated
+;; - returns list of datoms in key :tx-data
+;;
+;; Transact retunrs a map containing 4 keys
+;; :db-before database value before the transaction
+;; :db-after  database value after the transaction
+;; :tx-data   collection of Datoms produced by the transaction
+;; :tempids   argument to resolve-tempids
+;;
+;; {:db-before {:database-id "58a47389-f1ab-4d81-85b6-715cecde9bac", 
+;;              :t 1000, 
+;;              :next-t 1001, 
+;;              :history false}, 
+;;  :db-after {:database-id "58a47389-f1ab-4d81-85b6-715cecde9bac", 
+;;             :t 1001, 
+;;             :next-t 1005, 
+;;             :history false}, 
+;;  :tx-data [ #datom[13194139534317 50 #inst "2017-02-15T19:28:52.270-00:00" 
+;;                                                          13194139534317 true] 
+;;             #datom[17592186045422 63 "The Goonies" 13194139534317 true] 
+;;             #datom[17592186045422 64 "action/adventure" 13194139534317 true] 
+;;             #datom[17592186045422 65 1985 13194139534317 true] 
+;;             #datom[17592186045423 63 "Commando" 13194139534317 true] 
+;;             #datom[17592186045423 64 "action/adventure" 13194139534317 true] 
+;;             #datom[17592186045423 65 1985 13194139534317 true] 
+;;             #datom[17592186045424 63 "Repo Man" 13194139534317 true] 
+;;             #datom[17592186045424 64 "punk dystopia" 13194139534317 true] 
+;;             #datom[17592186045424 65 1984 13194139534317 true]], 
+;;  :tempids {-9223301668109598138 17592186045422, -9223301668109598137 17592186045423, 
+;;                                                 -9223301668109598136 17592186045424}}
 ;; ----------------------------------------------
 (defn save-task
   "Save task with specified name n, description d,
@@ -103,8 +133,9 @@
                :task/name name
                :task/description description
                :task/creation-date (java.util.Date.)
-               :task/status "open"}]] 
-    (:tx-data (d/transact conn data))))
+               :task/status "open"}]]
+    (println "::-> Conn: " conn ", name" name ", " description)
+    @(d/transact conn data)))
 
 
 ;; ----------------------------------------------

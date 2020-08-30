@@ -65,7 +65,8 @@
     (do
       (println "::-> tsksrv.system - Initialising " d " 
                      with db-uri" db-uri)
-      (db/init-db db-uri))
+      (db/start-db! db-uri)
+      )
     (println "::-> tsksrv.system - Initialising " d " 
                    failed. db-uri not found")))
 
@@ -90,7 +91,7 @@
 
 (defmethod ig/halt-key! :db/datomic-free [_ d]
   (println "::-> tsksrv.system - halting " d)
-  (db/shutdown))
+  (db/stop-db!))
 
 
 (defmethod ig/halt-key! :config/properties [_ c]
