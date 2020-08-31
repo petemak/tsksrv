@@ -1,7 +1,8 @@
 (ns tsksrv.db-test
   (:use [midje.sweet])
   (:require [tsksrv.db :as db]
-            [conf-er :as conf]))
+            [conf-er :as conf]
+            [datomic.api :as d]))
 
 
 
@@ -13,8 +14,9 @@
 (defn start-db!
   "Start db abd store reference to connection in atom"
   []
-  (let [dbref (db/start-db! (str "datomic:mem://testdb" (rand-int 1000)))]
-    (reset! db-conn dbref)))
+  (let [uri (str "datomic:mem://" (d/squuid))]
+    (d/delete-database uri)
+    (reset! db-conn (db/start-db! uri))))
 
 
 
@@ -35,16 +37,19 @@
 (defn stop-db!
   "Close connection and clear atom"
   []
+  (if-let [conn  (:conn @db-conn)]
+    (d/delete-database (:uri @db-conn)))
   (db/stop-db!)
   (reset! db-conn nil))
 
+
 (against-background [(before :contents  (start-db!))
                      (after :contents (stop-db!))]
- (fact "Adding data should "
-   (let [res (db/save-task (-> @db-conn
-                               (dissoc :db)
-                               (assoc :name "test")
-                               (assoc :description "Testing save-task")))]
-     (some? (:tx-data res)) => true
-     (count (:tx-data res)) => 6)) )
-
+    (fact "Intialising the database should add  "
+       (let [res (db/save-task (-> @db-conn
+                                   (dissoc :db)
+                                   (assoc :name "test")
+                                   (assoc :description "Testing save-task")))]
+         (some? (:tx-data res)) => true
+         (count (:tx-data res)) => 6
+         (count (:tempids res)) => 1)))

@@ -74,9 +74,10 @@
   "Connect to the database specified by the uri
    and transacts the schema"
   [uri]
-  (let [conn (connect kuri)
+  (let [conn (connect uri)
         db (d/transact conn task-schema)]
-    {:conn conn
+    {:uri uri
+     :conn conn
      :db db}))
 
 
